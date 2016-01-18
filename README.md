@@ -1,2 +1,2 @@
-# ALL-PROJECT
-Designing and programming a robot(EV3)
+# ALL-PROJECT Semester 2
+Programming a virtual robot for a game.
