@@ -1,6 +1,17 @@
 import sys,pygame
 import pytmx
 import random
+import time
+class Drill(object):
+    def __init__(self,name,toughness,attributes=[]):
+        pass
+    def update_drill(self):
+        pass
+    def change_endurance(self):
+        pass
+
+
+
 class Resource(pygame.sprite.Sprite):
     def __init__(self,name,image,weight,toughness,value,mined=False):
         pygame.sprite.Sprite.__init__(self)
@@ -84,17 +95,20 @@ robot=Robot("josh","rsz_player.png",200)
 robot.set_grid(8,7)
 robot_group.add(robot)
 
-#put some resources on the map randomly
-someresource=Resource("gold","images.png",20,3,100,mined=False)
-someresource.set_position_on_grid(random.randint(1,map_width),random.randint(1,map_height))
-resource_group.add(someresource)
+#put some resources on the map randomly given the list of resources
+resources=[('gold','Gold.png',20,4,100),('diamond','Diamond.png',40,5,200),('stone','Stone.png',15,2,40),('wood','Wood.png',10,1,20),('iron','Iron.png',25,3,50)]
+for resource in range(10):
+    random_number_from_resources_list=resources[random.randint(0,len(resources)-1)]
+    someresource=Resource(random_number_from_resources_list[0],random_number_from_resources_list[1],random_number_from_resources_list[2],random_number_from_resources_list[3],random_number_from_resources_list[4],mined=False)
+    someresource.set_position_on_grid(random.randint(1,map_width),random.randint(1,map_height))
+    resource_group.add(someresource)
 
 #load map.tmx
 map=pytmx.load_pygame("map2.tmx")
 
 #iterate through all layers and draw them
 for layer in map.layers:
-     for x,y, image in layer.tiles():
+    for x,y, image in layer.tiles():
         screen.blit(image,(x*map_tilesize,y*map_tilesize))
 robot_group.draw(screen)
 resource_group.draw(screen)
@@ -118,51 +132,48 @@ while True:
 
             #handle collisions and movements(up,down,right,left)
             if event.key==pygame.K_LEFT and map.get_tile_properties(robot.get_grid()[0]-1,robot.get_grid()[1],0)['walkable']=='True' :
-                    bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                    screen.blit(bck,robot.get_pos())
-                    robot.move("left")
-                    resource_group.draw(screen)
-                    robot_group.draw(screen)
-                    pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                screen.blit(bck,robot.get_pos())
+                robot.move("left")
+                resource_group.draw(screen)
+                robot_group.draw(screen)
+                pygame.display.update(robot_group.sprites()+resource_group.sprites())
 
 
 
 
 
             if event.key==pygame.K_RIGHT and map.get_tile_properties(robot.get_grid()[0]+1,robot.get_grid()[1],0)['walkable']=='True' :
-                    bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                    screen.blit(bck,robot.get_pos())
-                    robot.move("right")
-                    resource_group.draw(screen)
-                    robot_group.draw(screen)
-                    pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                screen.blit(bck,robot.get_pos())
+                robot.move("right")
+                resource_group.draw(screen)
+                robot_group.draw(screen)
+                pygame.display.update(robot_group.sprites()+resource_group.sprites())
 
 
             if event.key==pygame.K_UP and map.get_tile_properties(robot.get_grid()[0],robot.get_grid()[1]-1,0)['walkable']=='True' :
-                    bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                    screen.blit(bck,robot.get_pos())
-                    robot.move("up")
-                    resource_group.draw(screen)
-                    robot_group.draw(screen)
-                    pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                screen.blit(bck,robot.get_pos())
+                robot.move("up")
+                resource_group.draw(screen)
+                robot_group.draw(screen)
+                pygame.display.update(robot_group.sprites()+resource_group.sprites())
 
 
             if event.key==pygame.K_DOWN and map.get_tile_properties(robot.get_grid()[0],robot.get_grid()[1]+1,0)['walkable']=='True':
-                    bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                    screen.blit(bck,robot.get_pos())
-                    robot.move("bottom")
-                    resource_group.draw(screen)
-                    robot_group.draw(screen)
-                    pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                screen.blit(bck,robot.get_pos())
+                robot.move("bottom")
+                resource_group.draw(screen)
+                robot_group.draw(screen)
+                pygame.display.update(robot_group.sprites()+resource_group.sprites())
 
             #handle collisions between rects
             if pygame.sprite.spritecollideany(robot,resource_group,collided=None):
                 pass
 
 
-   # pygame.display.flip()
-
-
-
+                # pygame.display.flip()
 pygame.quit()
 quit()
