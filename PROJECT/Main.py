@@ -273,7 +273,7 @@ map_tilesize=32
 map_height=41
 map_width=41
 screen_offset=4*map_tilesize
-resources=[('gold','Gold.png',4,100),('diamond','Diamond.png',5,200),('stone','Stone.png',2,40),('wood','Wood.png',1,20),('iron','Iron.png',3,50)]
+resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
 #initialize display
 size=(map_width*map_tilesize,map_height*map_tilesize)
 screen=pygame.display.set_mode((size))
@@ -293,12 +293,13 @@ robot_group.add(robot)
 
 #put some resources on the map randomly given the list of resources.Each resurce has  name, image,toughness,value
 resources_information={}#dictionary that will keep track of where are the resources
+keys=list(resources.keys())
 for resource in range(10):
     random_y_pos=random.randint(1,map_width)
     random_x_pos=random.randint(1,map_height)
-    random_number_from_resources_list=resources[random.randint(0,len(resources)-1)]
-    resources_information[(random_y_pos,random_x_pos)]=random_number_from_resources_list[0]
-    someresource=Resource(random_number_from_resources_list[0],random_number_from_resources_list[1],random_number_from_resources_list[2],random_number_from_resources_list[3],mined=False)
+    random_key_from_resources_dict=random.choice(keys)
+    resources_information[(random_y_pos,random_x_pos)]=random_key_from_resources_dict
+    someresource=Resource(random_key_from_resources_dict,resources[random_key_from_resources_dict][0],resources[random_key_from_resources_dict][1],resources[random_key_from_resources_dict][2],mined=False)
     someresource.set_position_on_grid(random_y_pos,random_x_pos)
     resource_group.add(someresource)
 
