@@ -12,12 +12,14 @@
   <tile id="50">
    <properties>
     <property name="cost" value="10"/>
+    <property name="deposit_area" value="1"/>
     <property name="walkable" value="True"/>
    </properties>
   </tile>
   <tile id="53">
    <properties>
     <property name="cost" value="10"/>
+    <property name="deposit_area" value="1"/>
     <property name="walkable" value="True"/>
    </properties>
   </tile>

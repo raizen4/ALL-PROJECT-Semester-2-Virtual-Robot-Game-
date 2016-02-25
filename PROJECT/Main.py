@@ -6,7 +6,9 @@ import os
 import collections
 import numpy as np
 import heapq
+from pygame.locals import *
 os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
+
 
 class Queue:
     def __init__(self):
@@ -30,7 +32,7 @@ class PriorityQueue:
         return len(self.elements) == 0
 
     def put(self, item, priority):
-        heapq.heappush(self.elements, (priority, item))
+        heapq.heappush(self.elements,(priority, item))
 
     def get(self):
         return heapq.heappop(self.elements)[1]
@@ -38,8 +40,11 @@ class PriorityQueue:
 class Inventory(object):
     def __init__(self):
         self.inventory={}
-    def update_with_item(self,item):
-        pass
+    def update_with_item(self,item,quantity):
+        if item in self.inventory.keys():
+         self.inventory[item]+=quantity
+        else:
+         self.inventory[item]=1
     def sell_everything(self):
         pass
     def draw_inventory(self):
@@ -47,12 +52,7 @@ class Inventory(object):
     def get_items(self):
         return self.inventory.keys()
 
-class Drill(object):
-    def __init__(self,name,image,toughness):
-        pass
-    def update_drill(self):
-        pass
-    def change_endurance(self):
+    def sort_inventory(self):
         pass
 
 
@@ -90,6 +90,7 @@ class Robot(pygame.sprite.Sprite,Inventory):
         self.image=pygame.image.load(self.image_name)
         self.rect=self.image.get_rect()
         self.inventory =Inventory()#still in development
+        self.level=1
 
     #set initial position on the MATRIX
     def set_pos(self,x,y):
@@ -116,10 +117,15 @@ class Robot(pygame.sprite.Sprite,Inventory):
             self.rect.y-=map_tilesize
         if direction=="bottom":
             self.rect.y+=map_tilesize
-    def inventory(self):
-        pass
     def mine(self,resource):
-        pass
+        for progress in range(60):
+                        time.sleep(0.0000001)
+                        progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
+                        pygame.display.update(progress_bar)
+        self.inventory.update_with_item(resources_information[remove_resource_from_coordinates],1)
+    def advance_level(self):
+        self.level+=1
+
 
 """-------------------Search Algorithms------------------------------------------------"""
 
@@ -138,7 +144,7 @@ def is_passable(id):
 
 def neighbors(matrix_coordinates):
     (x,y)=matrix_coordinates[0],matrix_coordinates[1]
-    neighbors_list=[(x+1,y),(x-1,y),(x,y+1),(x,y-1)]
+    neighbors_list=[(x+1,y),(x-1,y),(x,y+1),(x,y-1)]#putting
     for id in neighbors_list:
         if is_passable(id)==False:
             neighbors_list.remove(id)
@@ -193,8 +199,12 @@ def dijkstra_search(matrix_of_costs_and_walls,start,goal):
                  frontier.put(nexts,priority)
                  came_from[nexts]=current
     return came_from,cost_so_far
+
+
+
 def A_star_search(matrix_of_walls_and_costs,start,goal):
     frontier=PriorityQueue()
+    frontier.put(start,0)
     came_from={}
     came_from[start]=None
     cost_so_far={}
@@ -203,12 +213,24 @@ def A_star_search(matrix_of_walls_and_costs,start,goal):
     while not frontier.empty():
         current=frontier.get()
 
-        
+        if current==goal:
+            break
+        for nexts in neighbors(current):
+
+            new_cost=cost_so_far[current]+ matrix_of_walls_and_costs[nexts[1]][nexts[0]][0]
+            if nexts not in came_from or new_cost<cost_so_far[nexts]:
+                cost_so_far[nexts]=new_cost
+                priority=new_cost+ Manhattan_distance(goal,nexts)
+                frontier.put(nexts,priority)
+                came_from[nexts]=current
+    return came_from,cost_so_far
+
+
 
 
 
 """the function below takes as the first argument
-the search algorithm used(because depending of the algorithm we can see what path did the robot takthe second argument is the start node and the goal argument is the end node"""
+the search algorithm used(because depending of the algorithm we can see what path did the robot take the second argument is the start node and the goal argument is the end node"""
 def reconstruct_path(came_from,start,goal):
     current=goal
     path=[current]
@@ -227,28 +249,42 @@ def reconstruct_path(came_from,start,goal):
 
     return path
 
+class Button:#still in development
+    """
+    x and y coordinates set the point on the screen from wich pygame starts drawing our button
+    it is going to draw to the right of the starting point "length" pixels and down "height" pixels
+    """
+    def __init__(self, screen, color, x, y, length, height):
+        self.screen = screen
+        self.colour = color
+        self.x = x
+        self.y = y
+        self.length = length
+        self.height = height
+        Button.draw_button(self)
 
-
-
-
+    def draw_button(self):
+        pygame.draw.rect(self.screen, self.colour, (self.x, self.y, self.length, self.height))
 
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
 pygame.init()
 map_tilesize=32
-map_height=31
+map_height=41
 map_width=41
-
+screen_offset=4*map_tilesize
+resources=[('gold','Gold.png',4,100),('diamond','Diamond.png',5,200),('stone','Stone.png',2,40),('wood','Wood.png',1,20),('iron','Iron.png',3,50)]
 #initialize display
 size=(map_width*map_tilesize,map_height*map_tilesize)
-screen=pygame.display.set_mode(size)
+screen=pygame.display.set_mode((size))
 
 
 
 
 #create the groups to handle sprites more easy
 robot_group=pygame.sprite.Group()
-resource_group=pygame.sprite.Group()
+resource_group=pygame.sprite.Group()#group that will have all the resources in there BUT will not say where are they,
+                                    # i have created a resource_information dictionary for this aspect of the game
 
 #initialize robot and add it to it's group
 robot=Robot("josh","rsz_player.png",200)
@@ -256,24 +292,37 @@ robot.set_grid(9,7)
 robot_group.add(robot)
 
 #put some resources on the map randomly given the list of resources.Each resurce has  name, image,toughness,value
-resources=[('gold','Gold.png',4,100),('diamond','Diamond.png',5,200),('stone','Stone.png',2,40),('wood','Wood.png',1,20),('iron','Iron.png',3,50)]
+resources_information={}#dictionary that will keep track of where are the resources
 for resource in range(10):
+    random_y_pos=random.randint(1,map_width)
+    random_x_pos=random.randint(1,map_height)
     random_number_from_resources_list=resources[random.randint(0,len(resources)-1)]
+    resources_information[(random_y_pos,random_x_pos)]=random_number_from_resources_list[0]
     someresource=Resource(random_number_from_resources_list[0],random_number_from_resources_list[1],random_number_from_resources_list[2],random_number_from_resources_list[3],mined=False)
-    someresource.set_position_on_grid(random.randint(1,map_width),random.randint(1,19))
+    someresource.set_position_on_grid(random_y_pos,random_x_pos)
     resource_group.add(someresource)
 
+print(resources_information)
+#design the deposit area
 
 #load map.tmx
 map=pytmx.load_pygame("map2.tmx")
 
 #iterate through all layers and draw them+make a 2D matrix for pathfinding algorithms to work on
 matrix=np.zeros((map_height,map_width),dtype='i2,i1')#lines and rows
+deposit_area=[]#create a separate list of lists with deposit tiles where each tile will have its x,y and if it is occupied
 for layer in map.layers:
     for x,y, image in layer.tiles():
         screen.blit(image,(x*map_tilesize,y*map_tilesize))
         obj_prop=map.get_tile_properties(x,y,0)
         is_that_obj_walkable=obj_prop['walkable']
+        try:
+          if obj_prop['deposit_area']=='1':
+            deposit_area.append((x,y,"free","none",0))#each element in this list is a tile in the map,
+                                               # each element is defind by its coordinates,if the tile is free or not,name of the resoure which is there and its value
+        except:
+          KeyError
+
         if is_that_obj_walkable=='True':
             is_that_obj_walkable=1
 
@@ -282,17 +331,16 @@ for layer in map.layers:
         cost_of_that_obj=obj_prop['cost']
         matrix[y][x][0]=cost_of_that_obj
         matrix[y][x][1]=is_that_obj_walkable
-
-
+print(deposit_area)
+#draw resources and our robot.
 robot_group.draw(screen)
 resource_group.draw(screen)
-
-#print(reconstruct_path(breadth_first_search(matrix,(robot.rect.x//32,robot.rect.y//32),(10,10)),(9,7),(10,10)))
 
 
 clock=pygame.time.Clock()
 pygame.display.update()
 while True:
+
     clock.tick(60)
     #all events go in here
     for event in pygame.event.get():
@@ -340,30 +388,32 @@ while True:
 
 
 
-            #handle collisions between rects and also
-            if pygame.sprite.spritecollideany(robot,resource_group,collided=None):
-                     time_to_mine=60
+            #handle collisions between rects
+            if pygame.sprite.groupcollide(robot_group,resource_group,False,False,collided=None):
                      if event.key==pygame.K_SPACE:
-
-                        for progress in range(180):
-                            time.sleep(0.0000001)
-                            progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
-                            pygame.display.update(progress_bar)
+                      try:
+                        remove_resource_from_coordinates=(robot.rect.x//32,robot.rect.y//32)
+                        robot.mine(resources_information[remove_resource_from_coordinates])
+                        resources_information.pop(remove_resource_from_coordinates)
+                        resource_group.remove(pygame.sprite.spritecollideany(robot,resource_group, collided = None))
+                        print(robot.inventory.inventory)
                         for layer in map.layers:
                             for x,y, image in layer.tiles():
                                 screen.blit(image,(x*map_tilesize,y*map_tilesize))
                         resource_group.draw(screen)
                         robot_group.draw(screen)
                         pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                      except KeyError:
+                          print("no object there")
 
-
+            camera.update(robot)
 
 
         if event.type==pygame.MOUSEBUTTONDOWN:
                 dest=(pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32)
-                print(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0])
                 #print(reconstruct_path(breadth_first_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest),(robot.rect.x//32,robot.rect.y//32),dest))
-                print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+                #print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+                print(reconstruct_path(A_star_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
 
 
 
