@@ -407,7 +407,7 @@ while True:
                       except KeyError:
                           print("no object there")
 
-            camera.update(robot)
+
 
 
         if event.type==pygame.MOUSEBUTTONDOWN:
