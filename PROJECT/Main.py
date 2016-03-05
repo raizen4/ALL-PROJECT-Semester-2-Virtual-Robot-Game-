@@ -36,10 +36,13 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
+class Deposit(object):
+    pass
 
 class Inventory(object):
+    _total_worth_of_the_deposit=0
     def __init__(self):
-        self.inventory={}#it should look like {gold:(quantity,photo,value)}
+        self.inventory={}#it should look like {resource:(photo,toughness,value)}
         global resources
         resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
         for key in resources.keys():
@@ -47,7 +50,11 @@ class Inventory(object):
 
 
     def update_with_item(self,item,quantity):
-        self.inventory[item][0]+=quantity
+        if self.inventory[item][0]+quantity<0:
+           self.inventory[item][0]=0
+        else:
+           self.inventory[item][0]+=quantity
+
         surface_for_inv.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
 
     def sell_everything(self):
@@ -63,16 +70,23 @@ class Inventory(object):
             someText=inventoryFont.render("("+key+")"+"->"+str(self.inventory[key][0]),True,(255,255,0))
             surface.blit(someText,(x_coord+34,y_coord+13))
             x_coord+=150
+         someText=inventoryFont.render("Total worth of the deposit:"+str(Inventory._total_worth_of_the_deposit),True,(255,255,0))
+         surface.blit(someText,(x_coord+34,y_coord+13))
     def get_items(self):
         return self.inventory
 
     def sort_inventory(self):
-        pass
+      pass
+
     def is_empty(self):
-      if len(self.inventory.keys())<1 or self.inventory.values()==0:
-          return False
-      else:
-          return True
+      for key in self.inventory:
+          if self.inventory[key][0]!=0:
+              print(self.inventory[key])
+              return False
+      return True
+    def get_total_worth_of_the_deposit():
+        return Inventory._total_worth_of_the_deposit
+
 
 
 
@@ -139,7 +153,6 @@ class Robot(pygame.sprite.Sprite,Inventory):
                         time.sleep(0.0000001)
                         progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
                         pygame.display.update(progress_bar)
-        print(resources_information[remove_resource_from_coordinates])
         self.inventory_of_robot.update_with_item(resources_information[remove_resource_from_coordinates],1)
 
     def advance_level(self):
@@ -149,7 +162,7 @@ class Robot(pygame.sprite.Sprite,Inventory):
         re_add_resource_to_the_map.set_position_on_grid(robot.rect.x//32,robot.rect.y//32)
         resource_group.add(re_add_resource_to_the_map)
         resources_information[(coordinates_of_place_to_be_deposited)]=item
-        self.inventory_of_robot.inventory[item][0]-=1
+        self.inventory_of_robot.update_with_item(item,-1)
 
 
 """-------------------Search Algorithms------------------------------------------------"""
@@ -314,6 +327,9 @@ robot_group=pygame.sprite.Group()
 resource_group=pygame.sprite.Group()#group that will have all the resources in there BUT will not say where are they,
                                     # i have created a resource_information dictionary for this aspect of the game
 
+#load map.tmx
+map=pytmx.load_pygame("map2.tmx")
+
 #initialize robot and add it to it's group
 robot=Robot("josh","rsz_player.png",100)
 robot.set_grid(9,7)
@@ -324,7 +340,7 @@ resources_information={}#dictionary that will keep track of where are the resour
 keys=list(resources.keys())#make a list with keys from our resources dictionary
 for resource in range(10):
     random_y_pos=random.randint(1,map_width)
-    random_x_pos=random.randint(1,map_height)
+    random_x_pos=random.randint(1,map_height-10)
     random_key_from_resources_dict=random.choice(keys)
     resources_information[(random_y_pos,random_x_pos)]=random_key_from_resources_dict
     someresource=Resource(random_key_from_resources_dict,resources[random_key_from_resources_dict][0],resources[random_key_from_resources_dict][1],resources[random_key_from_resources_dict][2],mined=False)
@@ -332,10 +348,7 @@ for resource in range(10):
     resource_group.add(someresource)
 
 print(resources_information)
-#design the deposit area
-
-#load map.tmx
-map=pytmx.load_pygame("map2.tmx")
+print(robot.inventory_of_robot.is_empty())
 
 #iterate through all layers and draw them+make a 2D matrix for pathfinding algorithms to work on
 matrix=np.zeros((map_height,map_width),dtype='i2,i1')#lines and rows
@@ -425,9 +438,11 @@ while True:
             if pygame.sprite.spritecollideany(robot,resource_group, collided = None):
                      if event.key==pygame.K_SPACE:
                         remove_resource_from_coordinates=(robot.rect.x//32,robot.rect.y//32)
+
                         robot.mine(resources_information[remove_resource_from_coordinates])
                         robot.inventory_of_robot.draw_inventory(surface_for_inv)
                         screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))
+
                         resources_information.pop(remove_resource_from_coordinates)
                         resource_group.remove(pygame.sprite.spritecollideany(robot,resource_group, collided = None))
                         for layer in map.layers:
@@ -439,24 +454,29 @@ while True:
 
             if event.key==pygame.K_d:
                 obj_prop=map.get_tile_properties(robot.rect.x//32,robot.rect.y//32,0)
-
-                if robot.inventory_of_robot.is_empty()==False:
+                #deposit the resources
+                if robot.inventory_of_robot.is_empty()==True:
                     print("nothing to deposit,inventory empty")
-                elif  robot.inventory_of_robot.is_empty()!=False and obj_prop['deposit_area']=='1' and deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]=='free':
-                   list_of_keys_from_robot_inv=list(robot.inventory_of_robot.inventory.keys())
-                   random_resource_to_deposit=random.choice(list_of_keys_from_robot_inv)
-                   while robot.inventory_of_robot.inventory[random_resource_to_deposit]==0:
-                       random_resource_to_deposit=random.choice(list_of_keys_from_robot_inv)
+                elif  robot.inventory_of_robot.is_empty()==False and obj_prop['deposit_area']=='1' and deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]=='free':
+                   for key in robot.inventory_of_robot.inventory:
+                       if robot.inventory_of_robot.inventory[key][0]>0:
+                           value_of_random_resource_to_deposit=robot.inventory_of_robot.inventory[key][0]
+                           random_resource_to_deposit=key
+
                    robot.deposit(random_resource_to_deposit,(robot.rect.x//32,robot.rect.y//32))
+
+                   robot.inventory_of_robot.draw_inventory(surface_for_inv)
+                   screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))
+
                    deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]='occupied'
                    deposit_area[(robot.rect.x//32,robot.rect.y//32)][1]=random_resource_to_deposit
                    deposit_area[(robot.rect.x//32,robot.rect.y//32)][2]=resources[random_resource_to_deposit][2]
                    resource_group.draw(screen)
                    robot_group.draw(screen)
                    pygame.display.update(robot_group.sprites()+resource_group.sprites())
-                elif robot.inventory_of_robot.is_empty()!=False and obj_prop['deposit_area']=='1' and deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]!='free':
+                elif robot.inventory_of_robot.is_empty()==False and obj_prop['deposit_area']=='1' and deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]!='free':
                     print("this is an occupied tile")
-                elif robot.inventory_of_robot.is_empty()!=False and obj_prop['deposit_area']!='1':
+                elif robot.inventory_of_robot.is_empty()==False and obj_prop['deposit_area']!='1':
                     print("this is not a deposit area,you can't deposit here the items")
 
         if event.type==pygame.MOUSEBUTTONDOWN:
