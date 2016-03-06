@@ -55,32 +55,37 @@ class Inventory(object):
                  else:
                    value[4]+=quantity
 
-        surface_for_inv.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
 
     def sell_everything(self):
         pass
      #draws inventory on the desireed screen
     def draw_inventory(self,surface):
+         surface.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
+
          inventoryFont = pygame.font.Font(None, 20)
          x_coord=0#column
          y_coord=0#row
          for value in self.inventory:
+            print(value)
             reso_image=pygame.image.load(value[1])
             surface.blit(reso_image,(x_coord,y_coord))
             someText=inventoryFont.render("("+value[0]+")"+"->"+str(value[4]),True,(255,255,0))
             surface.blit(someText,(x_coord+34,y_coord+13))
             x_coord+=150
+         print('-'*20)
          someText=inventoryFont.render("Total worth of the deposit:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
          surface.blit(someText,(x_coord+34,y_coord+13))
     def get_items(self):
         return self.inventory
 
-    def sort_inventory(self):
+    def sort_inventory(self,surface):
       for i in range(0,len(self.inventory)-1):
           for j in range(i+1,len(self.inventory)):
               if self.inventory[i][4]>self.inventory[j][4]:
                   self.inventory[i],self.inventory[j]=self.inventory[j],self.inventory[i]
-      print(self.inventory)
+      robot.inventory_of_robot.draw_inventory(surface)
+      screen.blit(surface,((map_width,map_height*map_tilesize-10*map_tilesize)))
+
 
 
 
@@ -323,6 +328,9 @@ size=(map_width*map_tilesize,map_height*map_tilesize)
 screen=pygame.display.set_mode((size))
 surface_for_inv=pygame.Surface((map_width*map_tilesize, 200))#width,height
 surface_for_inv.fill((0,0,0))
+surface_to_show_information=pygame.Surface((200,200))
+surface_to_show_information.fill((255,255,0))
+
 
 
 
@@ -378,7 +386,7 @@ for layer in map.layers:
         matrix[y][x][0]=cost_of_that_obj
         matrix[y][x][1]=is_that_obj_walkable
 print(deposit_area)
-print(robot.inventory_of_robot.sort_inventory())
+#print(robot.inventory_of_robot.sort_inventory())
 #draw resources and our robot.
 robot_group.draw(screen)
 resource_group.draw(screen)
@@ -386,7 +394,7 @@ resource_group.draw(screen)
 
 robot.inventory_of_robot.draw_inventory(surface_for_inv)#draw the inventory on the surface
 screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))#blit the surface on the screen (first put all items/buttons etc. , on the surface,then blit the surface !!!!!)
-
+screen.blit(surface_to_show_information,(map_width-25*map_tilesize,map_height-2*map_tilesize))
 
 clock=pygame.time.Clock()
 pygame.display.update()
@@ -456,6 +464,8 @@ while True:
                         robot_group.draw(screen)
                         pygame.display.update(robot_group.sprites()+resource_group.sprites())
 
+
+
             if event.key==pygame.K_d:
                 obj_prop=map.get_tile_properties(robot.rect.x//32,robot.rect.y//32,0)
                 #deposit the resources
@@ -468,7 +478,7 @@ while True:
                            random_resource_to_deposit=value[0]
 
                    robot.deposit(random_resource_to_deposit,(robot.rect.x//32,robot.rect.y//32))
-
+                    #the pair from below update the inventory and draws in correctly on the screen
                    robot.inventory_of_robot.draw_inventory(surface_for_inv)
                    screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))
 
@@ -483,11 +493,21 @@ while True:
                 elif robot.inventory_of_robot.is_empty()==False and obj_prop['deposit_area']!='1':
                     print("this is not a deposit area,you can't deposit here the items")
 
+
+            if event.key==pygame.K_s:
+
+                robot.inventory_of_robot.sort_inventory(surface_for_inv)
+                pygame.display.update()
+
+
+
         if event.type==pygame.MOUSEBUTTONDOWN:
                 dest=(pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32)
                 #print(reconstruct_path(breadth_first_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest),(robot.rect.x//32,robot.rect.y//32),dest))
                 #print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
                 print(reconstruct_path(A_star_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+
+
 
 
 
