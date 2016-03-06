@@ -40,20 +40,20 @@ class Deposit(object):
     pass
 
 class Inventory(object):
-    _total_worth_of_the_deposit=0
+    _total_worth_of_the_inv=0
     def __init__(self):
-        self.inventory={}#it should look like {resource:(photo,toughness,value)}
-        global resources
-        resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
-        for key in resources.keys():
-            self.inventory[key]=[0,resources[key][0],resources[key][2]]
-
+        self.inventory=[]#it should look like [[name,photo,toughness,value,initial_quantity] for each element]
+        resources_list=[['gold','Gold.png',4,100,0],['diamond','Diamond.png',5,200,0],['stone','Stone.png',2,40,0],['wood','Wood.png',1,20,0],['iron','Iron.png',3,50,0]]
+        for value in resources_list:
+            self.inventory.append(value)
 
     def update_with_item(self,item,quantity):
-        if self.inventory[item][0]+quantity<0:
-           self.inventory[item][0]=0
-        else:
-           self.inventory[item][0]+=quantity
+        for value in self.inventory:
+            if value[0]==item:
+                 if value[4]+quantity<0:
+                    value[4]=0
+                 else:
+                   value[4]+=quantity
 
         surface_for_inv.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
 
@@ -64,29 +64,34 @@ class Inventory(object):
          inventoryFont = pygame.font.Font(None, 20)
          x_coord=0#column
          y_coord=0#row
-         for key in resources.keys():
-            reso_image=pygame.image.load( self.inventory[key][1])
+         for value in self.inventory:
+            reso_image=pygame.image.load(value[1])
             surface.blit(reso_image,(x_coord,y_coord))
-            someText=inventoryFont.render("("+key+")"+"->"+str(self.inventory[key][0]),True,(255,255,0))
+            someText=inventoryFont.render("("+value[0]+")"+"->"+str(value[4]),True,(255,255,0))
             surface.blit(someText,(x_coord+34,y_coord+13))
             x_coord+=150
-         someText=inventoryFont.render("Total worth of the deposit:"+str(Inventory._total_worth_of_the_deposit),True,(255,255,0))
+         someText=inventoryFont.render("Total worth of the deposit:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
          surface.blit(someText,(x_coord+34,y_coord+13))
     def get_items(self):
         return self.inventory
 
     def sort_inventory(self):
-      pass
+      for i in range(0,len(self.inventory)-1):
+          for j in range(i+1,len(self.inventory)):
+              if self.inventory[i][4]>self.inventory[j][4]:
+                  self.inventory[i],self.inventory[j]=self.inventory[j],self.inventory[i]
+      print(self.inventory)
+
+
 
     def is_empty(self):
-      for key in self.inventory:
-          if self.inventory[key][0]!=0:
-              print(self.inventory[key])
+      for value in self.inventory:
+          if value[4]!=0:
+              print(value)
               return False
       return True
-    def get_total_worth_of_the_deposit():
-        return Inventory._total_worth_of_the_deposit
-
+    def total_worth_of_the_inv(self):
+        pass
 
 
 
@@ -334,7 +339,6 @@ map=pytmx.load_pygame("map2.tmx")
 robot=Robot("josh","rsz_player.png",100)
 robot.set_grid(9,7)
 robot_group.add(robot)
-
 #put some resources on the map randomly given the list of resources.Each resurce has  name, image,toughness,value
 resources_information={}#dictionary that will keep track of where are the resources
 keys=list(resources.keys())#make a list with keys from our resources dictionary
@@ -374,7 +378,7 @@ for layer in map.layers:
         matrix[y][x][0]=cost_of_that_obj
         matrix[y][x][1]=is_that_obj_walkable
 print(deposit_area)
-
+print(robot.inventory_of_robot.sort_inventory())
 #draw resources and our robot.
 robot_group.draw(screen)
 resource_group.draw(screen)
@@ -458,10 +462,10 @@ while True:
                 if robot.inventory_of_robot.is_empty()==True:
                     print("nothing to deposit,inventory empty")
                 elif  robot.inventory_of_robot.is_empty()==False and obj_prop['deposit_area']=='1' and deposit_area[(robot.rect.x//32,robot.rect.y//32)][0]=='free':
-                   for key in robot.inventory_of_robot.inventory:
-                       if robot.inventory_of_robot.inventory[key][0]>0:
-                           value_of_random_resource_to_deposit=robot.inventory_of_robot.inventory[key][0]
-                           random_resource_to_deposit=key
+                   for value in robot.inventory_of_robot.inventory:
+                       if value[4]>0:
+                           #value_of_random_resource_to_deposit=robot.inventory_of_robot.inventory[key][0]
+                           random_resource_to_deposit=value[0]
 
                    robot.deposit(random_resource_to_deposit,(robot.rect.x//32,robot.rect.y//32))
 
