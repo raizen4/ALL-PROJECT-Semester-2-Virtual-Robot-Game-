@@ -8,7 +8,7 @@ import numpy as np
 import heapq
 from pygame.locals import *
 os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
-
+__author__ = "Bogdan Nicolae Boldur"
 
 class Queue:
     def __init__(self):
@@ -41,7 +41,6 @@ class Deposit(object):
 
 class Inventory(object):
     _total_worth_of_the_inv=0
-    _money=0
     def __init__(self):
         self.inventory=[]#it should look like [[name,photo,toughness,value,initial_quantity] for each element]
         resources_list=[['gold','Gold.png',4,100,0],['diamond','Diamond.png',5,200,0],['stone','Stone.png',2,40,0],['wood','Wood.png',1,20,0],['iron','Iron.png',3,50,0]]
@@ -58,11 +57,12 @@ class Inventory(object):
 
 
     def sell_everything(self):
+        global money
         total=0
         for value in self.inventory:
             total+=value[3]*value[4]
             value[4]=0
-        Inventory._money+=total
+        money+=total
         print(Inventory._money)
      #draws inventory on the desireed screen
     def draw_inventory(self,surface):
@@ -71,7 +71,7 @@ class Inventory(object):
          inventoryFont = pygame.font.Font(None, 20)
          inventory_font_for_total_worth=pygame.font.Font(None,28)
          x_coord=0#column
-         y_coord=0#row
+         y_coord=20#row
          Inventory._total_worth_of_the_inv=0
          for value in self.inventory:
             print(value)
@@ -82,7 +82,8 @@ class Inventory(object):
             surface.blit(Text,(x_coord+34,y_coord+13))
             x_coord+=150
          print('-'*20)
-         someText=inventory_font_for_total_worth.render("Total worth of the inventory:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
+         x_coord-=50
+         someText=inventory_font_for_total_worth.render("Worth of the inventory:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
          surface.blit(someText,(x_coord+34,y_coord+13))
     def get_items(self):
         return self.inventory
@@ -168,10 +169,12 @@ class Robot(pygame.sprite.Sprite,Inventory):
             self.rect.y+=map_tilesize
 
     def mine(self,resource):
+        global score
         for progress in range(10):
                         time.sleep(0.0000001)
                         progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
                         pygame.display.update(progress_bar)
+        score+=1
         self.inventory_of_robot.update_with_item(resources_information[remove_resource_from_coordinates],1)
 
     def advance_level(self):
@@ -325,22 +328,37 @@ class Button:#still in development
 
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
+time_until_end=180
+global score
+score=0
+global money
+money=0
 pygame.init()
 map_tilesize=32
 map_height=41
 map_width=41
-screen_offset=4*map_tilesize
 global resources
 resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
+description_resources={'gold':"Highly valuable,get this and you get rich,its value is "+str(resources['gold'][2]),'diamond':'only for bo$$es,its value is '+str(resources['diamond'][2]),'stone':'for the average Joe,its value is '+str(resources['stone'][2]),
+                       'wood':'better have a kitten,its value is '+str(resources['wood'][2])}
+
 #initialize display + any other surfaces
 size=(map_width*map_tilesize,map_height*map_tilesize)
 screen=pygame.display.set_mode((size))
-surface_for_inv=pygame.Surface((map_width*map_tilesize, 200))#width,height
+surface_for_inv=pygame.Surface((map_width*map_tilesize-250, 100))#width,height
 surface_for_inv.fill((0,0,0))
-surface_to_show_information=pygame.Surface((150,50))
-surface_to_show_information.fill((0,0,0))
+surface_to_show_information=pygame.Surface((150,90))
+surface_to_show_information.fill((150,0,0))
+surface_for_showing_description_of_resources=pygame.Surface((150,150))
+surface_for_showing_description_of_resources.fill((153,32,221))
+surface_for_score_and_money_time=pygame.Surface((190,180))
+surface_for_score_and_money_time.fill((155,155,9))
+surface_for_description_item=pygame.Surface((500,50))
+surface_for_description_item.fill((250,50,30))
 font_for_screen=pygame.font.Font(None,35)
 font_for_level=pygame.font.Font(None,50)
+font_for_score_money_time=pygame.font.Font(None,40)
+
 
 
 
@@ -403,18 +421,35 @@ print(deposit_area)
 robot_group.draw(screen)
 resource_group.draw(screen)
 
+
+"-----------------------DRAWING ALL THE INFO ON THE SCREEN ON THE DEISRED SURFACES----------------------------------"
+
+
 """drawing info on desired surfaces"""
+#draw_inventory
 robot.inventory_of_robot.draw_inventory(surface_for_inv)#draw the inventory on the surface
 screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))#blit the surface on the screen (first put all items/buttons etc. , on the surface,then blit the surface !!!!!)
 screen.blit(surface_to_show_information,(map_width-25*map_tilesize,map_height-2*map_tilesize))
+#draw_tabs
+level=font_for_level.render("Level"+" "+str(robot.level),False,(190,190,0))
+name_of_robot=font_for_screen.render("Name:"+str(robot.name),False,(190,190,0))
+surface_to_show_information.blit(level,(0,20))
+surface_to_show_information.blit(name_of_robot,(0,60))
+screen.blit(surface_to_show_information,(1115,1000))#column,row
 
-level=font_for_level.render("Level"+" "+str(robot.level),False,(255,255,0))
-surface_to_show_information.blit(level,(0,0))
-screen.blit(surface_to_show_information,(1150,1000))
+score_tab=font_for_score_money_time.render("Score: "+str(score),False,(190,190,0))
+money_tab=font_for_score_money_time.render("Money: "+str(money),False,(190,190,0))
+time_tab=font_for_score_money_time.render("Time: "+str(time_until_end),False,(190,190,0))
+surface_for_score_and_money_time.blit(time_tab,(0,0))
+surface_for_score_and_money_time.blit(score_tab,(0,70))
+surface_for_score_and_money_time.blit(money_tab,(0,140))
+screen.blit(surface_for_score_and_money_time,(1120,1120))
+
+screen.blit(surface_for_description_item,(0,1110))
 """drawing the basic delimiters for ui"""
 delimiter_for_interface=font_for_screen.render("-"*1200,True,(255,250,0))
+screen.blit(delimiter_for_interface,(0,1090))
 delimiter_for_interface2=font_for_screen.render(('||'),False,(255,250,0))
-screen.blit(delimiter_for_interface,(0,1050))
 for i  in range(300):
     screen.blit(delimiter_for_interface2,(1100,1000+i))
 
