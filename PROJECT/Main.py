@@ -41,6 +41,7 @@ class Deposit(object):
 
 class Inventory(object):
     _total_worth_of_the_inv=0
+    _money=0
     def __init__(self):
         self.inventory=[]#it should look like [[name,photo,toughness,value,initial_quantity] for each element]
         resources_list=[['gold','Gold.png',4,100,0],['diamond','Diamond.png',5,200,0],['stone','Stone.png',2,40,0],['wood','Wood.png',1,20,0],['iron','Iron.png',3,50,0]]
@@ -57,23 +58,31 @@ class Inventory(object):
 
 
     def sell_everything(self):
-        pass
+        total=0
+        for value in self.inventory:
+            total+=value[3]*value[4]
+            value[4]=0
+        Inventory._money+=total
+        print(Inventory._money)
      #draws inventory on the desireed screen
     def draw_inventory(self,surface):
          surface.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
 
          inventoryFont = pygame.font.Font(None, 20)
+         inventory_font_for_total_worth=pygame.font.Font(None,28)
          x_coord=0#column
          y_coord=0#row
+         Inventory._total_worth_of_the_inv=0
          for value in self.inventory:
             print(value)
+            Inventory._total_worth_of_the_inv+=value[3]*value[4]
             reso_image=pygame.image.load(value[1])
             surface.blit(reso_image,(x_coord,y_coord))
-            someText=inventoryFont.render("("+value[0]+")"+"->"+str(value[4]),True,(255,255,0))
-            surface.blit(someText,(x_coord+34,y_coord+13))
+            Text=inventoryFont.render("("+value[0]+")"+"->"+str(value[4]),True,(255,255,0))
+            surface.blit(Text,(x_coord+34,y_coord+13))
             x_coord+=150
          print('-'*20)
-         someText=inventoryFont.render("Total worth of the deposit:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
+         someText=inventory_font_for_total_worth.render("Total worth of the inventory:"+str(Inventory._total_worth_of_the_inv),True,(255,255,0))
          surface.blit(someText,(x_coord+34,y_coord+13))
     def get_items(self):
         return self.inventory
@@ -323,13 +332,16 @@ map_width=41
 screen_offset=4*map_tilesize
 global resources
 resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
-#initialize display
+#initialize display + any other surfaces
 size=(map_width*map_tilesize,map_height*map_tilesize)
 screen=pygame.display.set_mode((size))
 surface_for_inv=pygame.Surface((map_width*map_tilesize, 200))#width,height
 surface_for_inv.fill((0,0,0))
-surface_to_show_information=pygame.Surface((200,200))
-surface_to_show_information.fill((255,255,0))
+surface_to_show_information=pygame.Surface((150,50))
+surface_to_show_information.fill((0,0,0))
+font_for_screen=pygame.font.Font(None,35)
+font_for_level=pygame.font.Font(None,50)
+
 
 
 
@@ -391,10 +403,20 @@ print(deposit_area)
 robot_group.draw(screen)
 resource_group.draw(screen)
 
-
+"""drawing info on desired surfaces"""
 robot.inventory_of_robot.draw_inventory(surface_for_inv)#draw the inventory on the surface
 screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))#blit the surface on the screen (first put all items/buttons etc. , on the surface,then blit the surface !!!!!)
 screen.blit(surface_to_show_information,(map_width-25*map_tilesize,map_height-2*map_tilesize))
+
+level=font_for_level.render("Level"+" "+str(robot.level),False,(255,255,0))
+surface_to_show_information.blit(level,(0,0))
+screen.blit(surface_to_show_information,(1150,1000))
+"""drawing the basic delimiters for ui"""
+delimiter_for_interface=font_for_screen.render("-"*1200,True,(255,250,0))
+delimiter_for_interface2=font_for_screen.render(('||'),False,(255,250,0))
+screen.blit(delimiter_for_interface,(0,1050))
+for i  in range(300):
+    screen.blit(delimiter_for_interface2,(1100,1000+i))
 
 clock=pygame.time.Clock()
 pygame.display.update()
