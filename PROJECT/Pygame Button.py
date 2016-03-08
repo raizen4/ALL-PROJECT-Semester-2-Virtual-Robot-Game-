@@ -2,7 +2,8 @@ import pygame
 
 pygame.init()
 from pygame.locals import *
-
+global code
+code=None
 
 class Button:
     """
@@ -10,7 +11,7 @@ class Button:
     it is going to draw to the right of the starting point "length" pixels and down "height" pixels
     """
 
-    def __init__(self, screen, color, x, y, length, height, mytext):
+    def __init__(self, screen, color, x, y, length, height, mytext,action,code):
         self.screen = screen
         self.color = color
         self.x = x
@@ -22,6 +23,8 @@ class Button:
         self.gettext = self.font.render(self.mytext, 1, (0, 0, 0))
         self.textwidth = self.gettext.get_width()
         self.textheight = self.gettext.get_height()
+        self.action=action
+        self.code=code
         Button.draw_button(self)
         Button.text(self, mytext)
 
@@ -39,73 +42,57 @@ class Button:
         self.screen.blit(self.font.render(self.mytext, True, (0, 0, 0)), (((self.x + (self.length / 2)) - (self.textwidth / 2)), ((self.y + (self.height / 2)) - (self.textheight / 2))))
         pygame.display.update()
 
+    def which_button_is_pressed(list_of_buttons):
+      global code
+      if event.type == MOUSEBUTTONDOWN:
+        pygame.init()
+        for button in list_of_buttons:
+            mouse=list(pygame.mouse.get_pos())
+            # mouse[0]//=32
+            # mouse[1]//=32
+            # mouse=tuple(mouse)
+            if mouse[0] > button.x:
+                if mouse[0] < (button.x+button.length):
+                    if mouse[1] > button.y:
+                        if mouse[1] < (button.y+button.height):
+                            print(button)
+                            button.color=[100,100,100]
+                            button.draw_button()
+                            button.text(button.mytext)
+                            print(button.color)
+                            code=button.code
+                            dissable=button.action
+                            for button in list_of_buttons:
+                                if button.action==dissable and button.code!=code:
+                                    button.color=[200,200,20]
+                                    button.draw_button()
+                                    button.text(button.mytext)
 
-if __name__ == "__main__":
-    screen = pygame.display.set_mode((600, 600))
-    pygame.display.set_caption("Button")
-    x = 200
-    y = 250
-    length = 200
-    height = 100
-    mytext = "Hello..."
-    screen.fill((255, 255, 255))
-    pygame.display.flip()
-    Button(screen, color=(200, 200, 200), x=x, y=y, length=length, height=height, mytext=mytext)
-    Run = True
-    while Run:
+
+
+
+
+
+
+screen = pygame.display.set_mode((1000, 600))
+pygame.display.set_caption("Button")
+screen.fill((255, 255, 255))
+pygame.display.flip()
+list_of_buttons=[]
+buton1=Button(screen,[200, 200, 200], 200, 250, 100, 100, 'hello','search',1)
+list_of_buttons.append(buton1)
+buton2=Button(screen,[200,200,200],100,150,100,100,"bye",'search',2)
+list_of_buttons.append(buton2)
+
+Run = True
+while Run:
+        global code
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 Run = False
-            elif event.type == MOUSEBUTTONDOWN:
-                mouse = pygame.mouse.get_pos()
-
-                if mouse[0] > x:
-                    if mouse[0] < (x + length):
-                        if mouse[1] > y:
-                            if mouse[1] < (y + height):
-
-                                Button(screen, color=(240, 240, 240), x=x, y=y, length=length, height=height,mytext=mytext)
-
-                                while True:
-                                    print("...its me")
-
-                                """
-                                To make the button clickable unlimited times change the code in the if-statement with this one:
-                                Button(screen, color=(240, 240, 240), x=x, y=y, length=length, height=height,mytext=mytext)
-                                pygame.time.delay(100)
-                                Button(screen, color=(200, 200, 200), x=x, y=y, length=length, height=height,mytext=mytext)
-                                print("Code to do stuff...")
-                                """
-
-                            else:
-                                pass
-                        else:
-                            pass
-                    else:
-                        pass
-                else:
-                    pass
-
-"""
-colors:
-pressed button - line 68
-button border - line 34
-button - line 35, it is written in line 53 where we call the class, changed in line 68 to show button is clicked.
-text - line 39
-screen - 51
-
-Button action:
-Type the code that tells the button what to do in line 71. It is an infinite loop now but you can always remove the loop
-and give the button a single action to perform. Further info is in a docstring in the if-statement
-
-Text can be changed on line 50
-Font and size are on line 20
-
-Shadow:
-variable col = 255 must NOT have a value less than 250 and more than 255!
-
-Dimensions:
-x, y coordinates can be changed on lines 46, 47
-button length and height are right after that on line 48, 49
-"""
+            Button.which_button_is_pressed(list_of_buttons)
+            print(code)
+            print(buton1.color)
+            print(buton2.color)

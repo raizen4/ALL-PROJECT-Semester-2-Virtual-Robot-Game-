@@ -10,6 +10,10 @@ from pygame.locals import *
 os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
 __author__ = "Bogdan Nicolae Boldur"
 
+
+global code
+code=None
+
 class Queue:
     def __init__(self):
         self.elements = collections.deque()
@@ -63,7 +67,7 @@ class Inventory(object):
             total+=value[3]*value[4]
             value[4]=0
         money+=total
-        print(Inventory._money)
+
      #draws inventory on the desireed screen
     def draw_inventory(self,surface):
          surface.fill((0,0,0))#fills the screen with black so a new draw method can be called with the updated quantity
@@ -130,6 +134,67 @@ class Resource(pygame.sprite.Sprite):
 
 
 
+
+class Button:
+    """
+    x and y coordinates set the point on the screen from wich pygame starts drawing our button
+    it is going to draw to the right of the starting point "length" pixels and down "height" pixels
+    """
+
+    def __init__(self, screen, color, x, y, length, height, mytext,action,code):
+        self.screen = screen
+        self.color = color
+        self.x = x
+        self.y = y
+        self.length = length
+        self.height = height
+        self.font = pygame.font.SysFont("Arial", 25)
+        self.mytext = mytext
+        self.gettext = self.font.render(self.mytext, 1, (0, 0, 0))
+        self.textwidth = self.gettext.get_width()
+        self.textheight = self.gettext.get_height()
+        self.action=action
+        self.code=code
+        Button.draw_button(self)
+        Button.text(self, mytext)
+
+    def draw_button(self):
+        col = 255
+        for i in range(1, 6):  # loop to create a shadow under the button
+            col = col - 50
+            pygame.draw.rect(self.screen, (col, col, col),((self.x + (6 - i)), (self.y + (6 - i)), self.length, self.height))
+
+        pygame.draw.rect(self.screen, (0, 0, 0), (self.x, self.y, self.length, self.height))  # border
+        pygame.draw.rect(self.screen, self.color,(self.x + 1, self.y + 1, self.length - 2, self.height - 2))  # button inside
+        pygame.display.flip()
+
+    def text(self, mytext):
+        self.screen.blit(self.font.render(self.mytext, True, (0, 0, 0)), (((self.x + (self.length / 2)) - (self.textwidth / 2)), ((self.y + (self.height / 2)) - (self.textheight / 2))))
+        pygame.display.update()
+
+    def which_button_is_pressed(list_of_buttons):
+      global code
+      if event.type == MOUSEBUTTONDOWN:
+        pygame.init()
+        for button in list_of_buttons:
+            mouse=list(pygame.mouse.get_pos())
+            mouse=tuple(mouse)
+            if mouse[0] > button.x:
+                if mouse[0] < (button.x+button.length):
+                    if mouse[1] > button.y:
+                        if mouse[1] < (button.y+button.height):
+                            print(button)
+                            button.color=[100,100,100]
+                            button.draw_button()
+                            button.text(button.mytext)
+                            print(button.color)
+                            code=button.code
+                            dissable=button.action
+                            for button in list_of_buttons:
+                                if button.action==dissable and button.code!=code:
+                                    button.color=[190,190,0]
+                                    button.draw_button()
+                                    button.text(button.mytext)
 
 class Robot(pygame.sprite.Sprite,Inventory):
     def __init__(self,name,image,max_loadout):
@@ -309,22 +374,38 @@ def reconstruct_path(came_from,start,goal):
 
     return path
 
-class Button:#still in development
-    """
-    x and y coordinates set the point on the screen from wich pygame starts drawing our button
-    it is going to draw to the right of the starting point "length" pixels and down "height" pixels
-    """
-    def __init__(self, screen, color, x, y, length, height):
-        self.screen = screen
-        self.colour = color
-        self.x = x
-        self.y = y
-        self.length = length
-        self.height = height
-        Button.draw_button(self)
+"--------------------Functions to draw UI on the screen-------------------"
+def draw_tabs():
+    surface_for_score_and_money_time.fill((190,120,0))
+    score_tab=font_for_score_money_time.render("Score: "+str(score),False,(190,190,0))
+    money_tab=font_for_score_money_time.render("Money: "+str(money),False,(190,190,0))
+    time_tab=font_for_score_money_time.render("Time: "+str(time_until_end),False,(190,190,0))
+    surface_for_score_and_money_time.blit(time_tab,(0,0))
+    surface_for_score_and_money_time.blit(score_tab,(0,70))
+    surface_for_score_and_money_time.blit(money_tab,(0,140))
+    screen.blit(surface_for_score_and_money_time,(1120,1120))
+    pygame.display.update()
 
-    def draw_button(self):
-        pygame.draw.rect(self.screen, self.colour, (self.x, self.y, self.length, self.height))
+def update_level():
+    level=font_for_level.render("Level"+" "+str(robot.level),False,(190,190,0))
+    name_of_robot=font_for_screen.render("Name:"+str(robot.name),False,(190,190,0))
+    surface_to_show_information.blit(level,(0,20))
+    surface_to_show_information.blit(name_of_robot,(0,60))
+    screen.blit(surface_to_show_information,(1115,1000))#column,row
+    pygame.display.update()
+def draw_options_for_buttons():
+    option_search=font_for_screen.render("Choose search algorithm",False,(190,190,0))
+    option_sort=font_for_screen.render("Choose sort algorithm",False,(190,190,0))
+    screen.blit(option_search,(0,1150))
+    screen.blit(option_sort,(400,1150))
+    buton_a=Button(screen,[255,255,0],20,1200,150,100,"A*",'search',1)
+    list_of_buttons.append(buton_a)
+    buton_dijkstra=Button(screen,[255,255,0],180,1200,150,100,"Dijkstra's",'search',2)
+    list_of_buttons.append(buton_dijkstra)
+    buton_quicksort=Button(screen,[255,255,0],380,1200,150,100,"Quicksort",'sort',3)
+    list_of_buttons.append(buton_quicksort)
+    buton_selection_sort=Button(screen,[255,255,0],550,1200,160,100,"selection_sort",'sort',4)
+    list_of_buttons.append(buton_selection_sort)
 
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
@@ -340,8 +421,8 @@ map_width=41
 global resources
 resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
 description_resources={'gold':"Highly valuable,get this and you get rich,its value is "+str(resources['gold'][2]),'diamond':'only for bo$$es,its value is '+str(resources['diamond'][2]),'stone':'for the average Joe,its value is '+str(resources['stone'][2]),
-                       'wood':'better have a kitten,its value is '+str(resources['wood'][2])}
-
+                       'wood':'better have a kitten,its value is '+str(resources['wood'][2]),'iron':" better than the kitten and average Joe,MINE IT,its value is "+str(resources['iron'][2])}
+list_of_buttons=[]
 #initialize display + any other surfaces
 size=(map_width*map_tilesize,map_height*map_tilesize)
 screen=pygame.display.set_mode((size))
@@ -353,8 +434,8 @@ surface_for_showing_description_of_resources=pygame.Surface((150,150))
 surface_for_showing_description_of_resources.fill((153,32,221))
 surface_for_score_and_money_time=pygame.Surface((190,180))
 surface_for_score_and_money_time.fill((155,155,9))
-surface_for_description_item=pygame.Surface((500,50))
-surface_for_description_item.fill((250,50,30))
+surface_for_description_item=pygame.Surface((1000,30))
+surface_for_description_item.fill((0,0,0))
 font_for_screen=pygame.font.Font(None,35)
 font_for_level=pygame.font.Font(None,50)
 font_for_score_money_time=pygame.font.Font(None,40)
@@ -430,37 +511,57 @@ resource_group.draw(screen)
 robot.inventory_of_robot.draw_inventory(surface_for_inv)#draw the inventory on the surface
 screen.blit(surface_for_inv,((map_width,map_height*map_tilesize-10*map_tilesize)))#blit the surface on the screen (first put all items/buttons etc. , on the surface,then blit the surface !!!!!)
 screen.blit(surface_to_show_information,(map_width-25*map_tilesize,map_height-2*map_tilesize))
-#draw_tabs
-level=font_for_level.render("Level"+" "+str(robot.level),False,(190,190,0))
-name_of_robot=font_for_screen.render("Name:"+str(robot.name),False,(190,190,0))
-surface_to_show_information.blit(level,(0,20))
-surface_to_show_information.blit(name_of_robot,(0,60))
-screen.blit(surface_to_show_information,(1115,1000))#column,row
+#details about the player
+update_level()
+draw_tabs()
+#draw options for buttons
+draw_options_for_buttons()
 
-score_tab=font_for_score_money_time.render("Score: "+str(score),False,(190,190,0))
-money_tab=font_for_score_money_time.render("Money: "+str(money),False,(190,190,0))
-time_tab=font_for_score_money_time.render("Time: "+str(time_until_end),False,(190,190,0))
-surface_for_score_and_money_time.blit(time_tab,(0,0))
-surface_for_score_and_money_time.blit(score_tab,(0,70))
-surface_for_score_and_money_time.blit(money_tab,(0,140))
-screen.blit(surface_for_score_and_money_time,(1120,1120))
 
-screen.blit(surface_for_description_item,(0,1110))
+
 """drawing the basic delimiters for ui"""
 delimiter_for_interface=font_for_screen.render("-"*1200,True,(255,250,0))
 screen.blit(delimiter_for_interface,(0,1090))
+screen.blit(delimiter_for_interface,(0,1130))
 delimiter_for_interface2=font_for_screen.render(('||'),False,(255,250,0))
 for i  in range(300):
     screen.blit(delimiter_for_interface2,(1100,1000+i))
+    screen.blit(delimiter_for_interface2,(350,1150+i))
+
+
+
 
 clock=pygame.time.Clock()
 pygame.display.update()
 while True:
+    mouse =list(pygame.mouse.get_pos())
+    mouse[0]//=32
+    mouse[1]//=32
+    mouse=tuple(mouse)
     clock.tick(60)
+    draw_tabs()
     #all events go in here
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             sys.exit()
+
+
+        Button.which_button_is_pressed(list_of_buttons)
+
+        if mouse in resources_information.keys():
+            print("Daa")
+            info_to_display=resources_information[(mouse[0],mouse[1])]
+            display_description=font_for_screen.render("Description:   "+info_to_display+":"+description_resources[info_to_display],False,(255,255,9))
+            surface_for_description_item.blit(display_description,(0,0))
+            screen.blit(surface_for_description_item,(0,1110))
+            surface_for_description_item.fill((0,0,0))
+        else:
+             display_description=font_for_screen.render("Description: NONE",False,(255,255,9))
+             surface_for_description_item.blit(display_description,(0,0))
+             screen.blit(surface_for_description_item,(0,1110))
+             surface_for_description_item.fill((0,0,0))
+
+
 
         if event.type==pygame.KEYDOWN:
             #handle collisions and movements(up,down,right,left)
@@ -559,10 +660,20 @@ while True:
 
 
         if event.type==pygame.MOUSEBUTTONDOWN:
-                dest=(pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32)
-                #print(reconstruct_path(breadth_first_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest),(robot.rect.x//32,robot.rect.y//32),dest))
-                #print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
-                print(reconstruct_path(A_star_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+            global code
+            dest=(pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32)
+            if dest[0]<0 or dest[0]>41 or dest[1]>31 or dest[1]<0:
+                print("you can t go there")
+            else:
+
+                if code==1:
+                    print("A* in action")
+                    print(reconstruct_path(A_star_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+
+                elif code==2:
+                    print("DIJKSTRA IN ACTION")
+                    print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
+
 
 
 
