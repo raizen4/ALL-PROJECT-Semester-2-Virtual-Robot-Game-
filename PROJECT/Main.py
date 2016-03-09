@@ -226,6 +226,7 @@ class Robot(pygame.sprite.Sprite,Inventory):
         self.inventory_of_robot =Inventory()#still in development
         self.level=1
 
+
     #set initial position on the MATRIX
     def set_pos(self,x,y):
         self.rect.x=x
@@ -254,11 +255,22 @@ class Robot(pygame.sprite.Sprite,Inventory):
 
     def mine(self,resource):
         global score
-        for progress in range(10):
-                        time.sleep(0.0000001)
+        global progression
+        global progression_coeficient
+        for progress in range(180):
+                        time.sleep(0.01)
                         progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
                         pygame.display.update(progress_bar)
+
         score+=1
+        if progression>100:
+            robot.advance_level()
+            progression=0
+            if progression_coeficient>0.2:
+                progression_coeficient-=0.2
+        else:
+            progression=progression_coeficient*10+resources[resource][2]*3
+
         self.inventory_of_robot.update_with_item(resources_information[remove_resource_from_coordinates],1)
 
     def advance_level(self):
@@ -395,7 +407,7 @@ def reconstruct_path(came_from,start,goal):
 
 "--------------------Functions to draw UI on the screen-------------------"
 def draw_tabs():
-    surface_for_score_and_money_time.fill((190,120,0))
+    surface_for_score_and_money_time.fill((0,0,0))
     score_tab=font_for_score_money_time.render("Score: "+str(score),False,(190,190,0))
     money_tab=font_for_score_money_time.render("Money: "+str(money),False,(190,190,0))
     time_tab=font_for_score_money_time.render("Time: "+str(time_until_end),False,(190,190,0))
@@ -406,6 +418,7 @@ def draw_tabs():
     pygame.display.update()
 
 def update_level():
+    surface_to_show_information.fill((0,0,0))
     level=font_for_level.render("Level"+" "+str(robot.level),False,(190,190,0))
     name_of_robot=font_for_screen.render("Name:"+str(robot.name),False,(190,190,0))
     surface_to_show_information.blit(level,(0,20))
@@ -429,6 +442,10 @@ def draw_options_for_buttons():
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
 time_until_end=180
+global progression
+progression=0
+global progression_coeficient
+progression_coeficient=2
 global code_search,code_sort
 code_search=0
 code_sort=0
@@ -556,12 +573,15 @@ for i  in range(300):
 clock=pygame.time.Clock()
 pygame.display.update()
 while True:
+
     mouse =list(pygame.mouse.get_pos())
     mouse[0]//=32
     mouse[1]//=32
     mouse=tuple(mouse)
+
     clock.tick(60)
     draw_tabs()
+    update_level()
     #all events go in here
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
@@ -674,6 +694,13 @@ while True:
 
 
             if event.key==pygame.K_s:
+
+                robot.inventory_of_robot.sort_inventory(surface_for_inv)
+                pygame.display.update()
+
+            if event.key==pygame.K_a:
+                robot.inventory_of_robot.sell_everything()
+
 
                 robot.inventory_of_robot.sort_inventory(surface_for_inv)
                 pygame.display.update()
