@@ -11,8 +11,6 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
 __author__ = "Bogdan Nicolae Boldur"
 
 
-global code
-code=None
 
 class Queue:
     def __init__(self):
@@ -93,12 +91,16 @@ class Inventory(object):
         return self.inventory
 
     def sort_inventory(self,surface):
-      for i in range(0,len(self.inventory)-1):
+      global code_sort
+      if code_sort==4:
+         for i in range(0,len(self.inventory)-1):
           for j in range(i+1,len(self.inventory)):
               if self.inventory[i][4]>self.inventory[j][4]:
                   self.inventory[i],self.inventory[j]=self.inventory[j],self.inventory[i]
-      robot.inventory_of_robot.draw_inventory(surface)
-      screen.blit(surface,((map_width,map_height*map_tilesize-10*map_tilesize)))
+         robot.inventory_of_robot.draw_inventory(surface)
+         screen.blit(surface,((map_width,map_height*map_tilesize-10*map_tilesize)))
+      else:
+          print("No other found")
 
 
 
@@ -173,7 +175,8 @@ class Button:
         pygame.display.update()
 
     def which_button_is_pressed(list_of_buttons):
-      global code
+      global code_search
+      global code_sort
       if event.type == MOUSEBUTTONDOWN:
         pygame.init()
         for button in list_of_buttons:
@@ -183,18 +186,34 @@ class Button:
                 if mouse[0] < (button.x+button.length):
                     if mouse[1] > button.y:
                         if mouse[1] < (button.y+button.height):
-                            print(button)
-                            button.color=[100,100,100]
-                            button.draw_button()
-                            button.text(button.mytext)
-                            print(button.color)
-                            code=button.code
+                            print(button.mytext)
+                            #button.color=[100,100,100]
+                            #button.draw_button()
+                            #button.text(button.mytext)
                             dissable=button.action
-                            for button in list_of_buttons:
-                                if button.action==dissable and button.code!=code:
+                            if dissable=='search':
+                                button.color=[100,100,100]
+                                button.draw_button()
+                                button.text(button.mytext)
+                                code_search=button.code
+                                for button in list_of_buttons:
+                                 if button.action==dissable and button.code!=code_search:
                                     button.color=[190,190,0]
                                     button.draw_button()
                                     button.text(button.mytext)
+                                 print(code_search)
+                            elif dissable=='sort':
+                                button.color=[100,100,100]
+                                button.draw_button()
+                                button.text(button.mytext)
+                                code_sort=button.code
+                                for button in list_of_buttons:
+                                 if button.action==dissable and button.code!=code_sort:
+                                    button.color=[190,190,0]
+                                    button.draw_button()
+                                    button.text(button.mytext)
+                                print(code_sort)
+
 
 class Robot(pygame.sprite.Sprite,Inventory):
     def __init__(self,name,image,max_loadout):
@@ -410,6 +429,9 @@ def draw_options_for_buttons():
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
 time_until_end=180
+global code_search,code_sort
+code_search=0
+code_sort=0
 global score
 score=0
 global money
@@ -549,7 +571,6 @@ while True:
         Button.which_button_is_pressed(list_of_buttons)
 
         if mouse in resources_information.keys():
-            print("Daa")
             info_to_display=resources_information[(mouse[0],mouse[1])]
             display_description=font_for_screen.render("Description:   "+info_to_display+":"+description_resources[info_to_display],False,(255,255,9))
             surface_for_description_item.blit(display_description,(0,0))
@@ -660,17 +681,17 @@ while True:
 
 
         if event.type==pygame.MOUSEBUTTONDOWN:
-            global code
+            global code_search
             dest=(pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32)
             if dest[0]<0 or dest[0]>41 or dest[1]>31 or dest[1]<0:
                 print("you can t go there")
             else:
 
-                if code==1:
+                if code_search==1:
                     print("A* in action")
                     print(reconstruct_path(A_star_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
 
-                elif code==2:
+                elif code_search==2:
                     print("DIJKSTRA IN ACTION")
                     print(reconstruct_path(dijkstra_search(matrix,(robot.rect.x//32,robot.rect.y//32),dest)[0],(robot.rect.x//32,robot.rect.y//32),dest))
 
