@@ -4,8 +4,14 @@ import pygame
 pygame.init()
 from pygame.locals import *
 
-class Buttons:
+__author__ = "Ivo Iliev"
 
+class Buttons:
+    """
+    Class Buttons is used to create a button. Can be called several times with different x, y, lenght, height variables
+    to create buttons with different position and size. Colours and text can also be set whenever the button is called.
+    Text will auto-fit itself in the middle of the button whatever the button or the text size is
+    """
     def __init__(self, screen, color, x, y, length, height, text):
         self.screen = screen
         self.color = color
@@ -19,7 +25,6 @@ class Buttons:
         self.textW = self.gettext.get_width()
         self.textH = self.gettext.get_height()
         Buttons.draw_button(self)
-        # might need to initialize button and text methods here
 
 
     def draw_button(self):
@@ -31,6 +36,10 @@ class Buttons:
         pygame.display.update()
 
 class Scene:
+    """
+    Class Scene is used to blit the scene image on top of previously called elements in order to provide
+    a blank scene for further elements to be blitted on
+    """
     def __init__(self, screen, color, text):
         self.screen = screen
         self.color = color
@@ -45,11 +54,14 @@ class Scene:
     def draw_scene(self):
         scenebg = pygame.image.load("scenebg.png")
         self.screen.blit(scenebg, (208, 208))
-        #pygame.draw.rect(self.screen, self.color, (208, 208, 224, 224))
         self.screen.blit(self.font.render(self.text, True, (255, 240, 245)), ((320-(self.textW//2)), 230))
         pygame.display.update()
 
 class NameInput:
+    """
+    Class NameInput is used to type on the screen the name the user entered.
+    Text will appear in a textbox created by Class TextBox
+    """
     def __init__(self, screen, text):
         self.screen = screen
         self.text = text
@@ -61,6 +73,9 @@ class NameInput:
         pygame.display.update()
 
 class TextBox:
+    """
+    Creates the text box where class NameInput will blit the user-input text
+    """
     def __init__(self, screen):
         self.screen = screen
         TextBox.draw_text_box(self)
@@ -71,6 +86,12 @@ class TextBox:
         pygame.display.update()
 
 def StartMenu(screen):
+    """
+    Launching the code will open this function
+    The function calls class Buttons, creating 3 buttons with 3 different assignments
+    The function has its own code to determine wich button was pressed and depending on that it calls
+    a different function, representing different buttons
+    """
     x = 260
     y1 = 270
     y2 = 310
@@ -131,6 +152,12 @@ def StartMenu(screen):
 
 
 def NewGameDif(screen):
+    """
+    Similar to the StartMenu function this one allows the user to choose game difficulty by pressing
+    any one of the 3 buttons. Just like Start Menu this function determines wich button was pressed by
+    the user and therefore it saves the difficulty value that the user wants.
+    This function calls NewGameName function at the end.
+    """
     x = 260
     y1 = 270
     y2 = 310
@@ -197,6 +224,12 @@ def NewGameDif(screen):
                 pass
 
 def NewGameName(screen):
+    """
+    Function calls both class TextBox and class NameInput
+    It allows the user to type in their name
+    Whenever Enter is pressed a "Run Game" button from the class Buttons appears
+    This button will run the game code and will close the Start Menu window
+    """
     Scene(screen, color=(138, 43, 226), text="Type in your name")
     TextBox(screen)
     x = 260
@@ -223,9 +256,6 @@ def NewGameName(screen):
                 print(name)  # code to save name here <----------------
                 Buttons(screen, color=(200, 200, 200), x=x, y=y, length=length, height=height, text="Run Game")
                 break
-
-            if event.type == K_BACKSPACE:
-                print("backspace")
 
             elif event.key == K_RETURN:
                 print(name)  # code to save name here <----------------
