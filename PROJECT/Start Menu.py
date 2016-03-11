@@ -1,6 +1,4 @@
-"""
-224 scene
-"""
+
 import pygame
 
 pygame.init()
@@ -207,20 +205,27 @@ def NewGameName(screen):
     height = 30
     name = ""
     count = 0
-    """
-    Add button "RUN" when Return is pressed
-    """
     while True:
         """
+        ASCII:
+
         Enter = 13
         Backspace = 8
         """
         event = pygame.event.poll()
-        if event.type == KEYDOWN:
+
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            break
+
+        elif event.type == KEYDOWN:
             if count == 12:
                 print(name)  # code to save name here <----------------
                 Buttons(screen, color=(200, 200, 200), x=x, y=y, length=length, height=height, text="Run Game")
                 break
+
+            if event.type == K_BACKSPACE:
+                print("backspace")
 
             elif event.key == K_RETURN:
                 print(name)  # code to save name here <----------------
@@ -228,10 +233,13 @@ def NewGameName(screen):
                 break
 
             elif event.key <= 127:
-                name = name + chr(event.key)
-                print(name)
-                NameInput(screen, text=name)
-                count += 1
+                if event.key == 8:
+                    pass
+                else:
+                    name = name + chr(event.key)
+                    print(name)
+                    NameInput(screen, text=name)
+                    count += 1
 
     Run = True
     while Run:
@@ -263,8 +271,6 @@ def NewGameName(screen):
                         pass
                 else:
                     pass
-
-
 
 if __name__ == "__main__":
     bg = pygame.image.load("bg.png")
