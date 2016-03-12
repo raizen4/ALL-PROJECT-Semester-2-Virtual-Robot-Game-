@@ -6,6 +6,7 @@ import os
 import collections
 import numpy as np
 import heapq
+import sqlite3
 from pygame.locals import *
 os.environ['SDL_VIDEO_WINDOW_POS'] = "0,0"
 __author__ = "Bogdan Nicolae Boldur"
@@ -113,7 +114,18 @@ class Inventory(object):
       return True
     def total_worth_of_the_inv(self):
         pass
+    
+    def create_table():
+        cur.execute('CREATE TABLE IF NOT EXISTS resources(id INT, photo TEXT, name TEXT, value INT, toughness INT, quantity INT)')
 
+    def load_resources():
+        cur.execute("INSERT INTO resources VALUES(1, 'Wood.png', 'wood', 20, 1, 0)")
+        cur.execute("INSERT INTO resources VALUES(2, 'Stone.png', 'stone', 40, 2, 0)")
+        cur.execute("INSERT INTO resources VALUES(3, 'Iron.png', 'iron', 50, 3, 0)")
+        cur.execute("INSERT INTO resources VALUES(4, 'Gold.png', 'gold', 100, 4, 0)")
+        cur.execute("INSERT INTO resources VALUES(5, 'Diamond.png', 'diamond', 200, 5, 0)")
+
+        con.commit()
 
 
 class Resource(pygame.sprite.Sprite):
@@ -457,8 +469,12 @@ pygame.init()
 map_tilesize=32
 map_height=41
 map_width=41
+con = sqlite3.connect('MBresources.db')
+cur = con.cursor()
+create_table()
+load_resources()
 global resources
-resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
+resources={'gold':cur.execute('SELECT * FROM resources WHERE name = "gold"'),'diamond':cur.execute('SELECT * FROM resources WHERE name = "diamond"'),'stone':cur.execute('SELECT * FROM resources WHERE name = "stone"'),'wood':cur.execute('SELECT * FROM resources WHERE name = "wood"'),'iron':cur.execute('SELECT * FROM resources WHERE name = "iron"')}
 description_resources={'gold':"Highly valuable,get this and you get rich,its value is "+str(resources['gold'][2]),'diamond':'only for bo$$es,its value is '+str(resources['diamond'][2]),'stone':'for the average Joe,its value is '+str(resources['stone'][2]),
                        'wood':'better have a kitten,its value is '+str(resources['wood'][2]),'iron':" better than the kitten and average Joe,MINE IT,its value is "+str(resources['iron'][2])}
 list_of_buttons=[]
