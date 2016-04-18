@@ -38,8 +38,7 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
-class Deposit(object):
-    pass
+
 
 class Inventory(object):
     _total_worth_of_the_inv=0
@@ -325,7 +324,7 @@ def breadth_first_search(matrix_with_costs_and_walls, start, goal):
             break
 
         for nexts in neighbors_for_search:
-            if (nexts not in came_from) and (matrix_with_costs_and_walls[nexts[1]][nexts[0]][1]==1):
+            if (nexts not in came_from) and (matrix_with_costs_and_walls[nexts[0]][nexts[1]][1]==1):
                frontier.put(nexts)
                came_from[nexts]=curent_id
     return came_from
@@ -343,11 +342,11 @@ def dijkstra_search(matrix_of_costs_and_walls,start,goal):
         if current==goal:
             break
         for nexts in neighbors(current):
-            if matrix_of_costs_and_walls[nexts[1]][nexts[0]][0]>2000:
+            if matrix_of_costs_and_walls[nexts[0]][nexts[1]][0]>2000:
                  pass
             else:
                 print(cost_so_far)
-                new_cost=cost_so_far[current]+matrix_of_costs_and_walls[nexts[1]][nexts[0]][0]#accesing the cost for the neighbor
+                new_cost=cost_so_far[current]+matrix_of_costs_and_walls[nexts[0]][nexts[1]][0]#accesing the cost for the neighbor
 
                 if nexts not in came_from or new_cost< cost_so_far[nexts]:
                  cost_so_far[nexts]=new_cost
@@ -373,7 +372,7 @@ def A_star_search(matrix_of_walls_and_costs,start,goal):
             break
         for nexts in neighbors(current):
 
-            new_cost=cost_so_far[current]+ matrix_of_walls_and_costs[nexts[1]][nexts[0]][0]
+            new_cost=cost_so_far[current]+ matrix_of_walls_and_costs[nexts[0]][nexts[1]][0]
             if nexts not in came_from or new_cost<cost_so_far[nexts]:
                 cost_so_far[nexts]=new_cost
                 priority=new_cost+ Manhattan_distance(goal,nexts)
@@ -461,6 +460,8 @@ global resources
 resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
 description_resources={'gold':"Highly valuable,get this and you get rich,its value is "+str(resources['gold'][2]),'diamond':'only for bo$$es,its value is '+str(resources['diamond'][2]),'stone':'for the average Joe,its value is '+str(resources['stone'][2]),
                        'wood':'better have a kitten,its value is '+str(resources['wood'][2]),'iron':" better than the kitten and average Joe,MINE IT,its value is "+str(resources['iron'][2])}
+dict_of_arrows={"up":'up.jpg','left':'left.jpg','right':'right.jpg','down':'down.jpg'}
+dict_of_buffs=[]
 list_of_buttons=[]
 #initialize display + any other surfaces
 size=(map_width*map_tilesize,map_height*map_tilesize)
@@ -513,13 +514,14 @@ print(resources_information)
 print(robot.inventory_of_robot.is_empty())
 
 #iterate through all layers and draw them+make a 2D matrix for pathfinding algorithms to work on
-matrix=np.zeros((map_height,map_width),dtype='i2,i1')#lines and rows
+matrix=np.zeros((map_height,map_width),dtype='i2,i1,i1,S5,S5')#lines and rows,last one is if the tile has changed over time so the arrows will be represented as they should
 deposit_area={}#create a separate list of lists with deposit tiles where each tile will have its x,y and if it is occupied
 for layer in map.layers:
     for x,y, image in layer.tiles():
         screen.blit(image,(x*map_tilesize,y*map_tilesize))
         obj_prop=map.get_tile_properties(x,y,0)
         is_that_obj_walkable=obj_prop['walkable']
+        is_that_obj_water=obj_prop['water']
         try:
           if obj_prop['deposit_area']=='1':
             deposit_area[(x,y)]=['free','none',0]#each key in this dict represents a tile on the map which is part of the deposit area
@@ -533,8 +535,11 @@ for layer in map.layers:
         elif is_that_obj_walkable=='false':
             is_that_obj_walkable=0
         cost_of_that_obj=obj_prop['cost']
-        matrix[y][x][0]=cost_of_that_obj
-        matrix[y][x][1]=is_that_obj_walkable
+        matrix[x][y][0]=cost_of_that_obj
+        matrix[x][y][1]=is_that_obj_walkable
+        matrix[x][y][2]=is_that_obj_water
+        matrix[x][y][3]='False'
+        matrix[x][y][4]=None
 print(deposit_area)
 #print(robot.inventory_of_robot.sort_inventory())
 #draw resources and our robot.
@@ -606,42 +611,126 @@ while True:
 
         if event.type==pygame.KEYDOWN:
             #handle collisions and movements(up,down,right,left)
-            if event.key==pygame.K_LEFT and map.get_tile_properties(robot.get_grid()[0]-1,robot.get_grid()[1],0)['walkable']=='True' :
-                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                screen.blit(bck,robot.get_pos())
-                robot.move("left")
-                resource_group.draw(screen)
-                robot_group.draw(screen)
-                pygame.display.update(robot_group.sprites()+resource_group.sprites())
+            if event.key==pygame.K_LEFT and map.get_tile_properties(robot.get_grid()[0]-1,robot.get_grid()[1],0)['walkable']=='True':
+
+                if matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][2]==0  :
+
+                    if  matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3].decode('UTF-8')=='False' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False' or ( matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False'):
+                        bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("left")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                    elif  (matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3].decode('UTF-8')=='False' and matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True') or matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True' :
+                        bck=pygame.image.load("left.jpg")
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("left")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                elif matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][2]==1:
+
+                     if matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3].decode('UTF-8')=='False':
+                        bck=pygame.image.load("left.jpg")
+                        screen.blit(bck,((robot.get_grid()[0]-1)*32 , robot.get_grid()[1]*32))
+                        matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][2]=0
+                        matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][3]="True"
+                        matrix[robot.get_grid()[0]-1][robot.get_grid()[1]][4]="left"
 
 
 
             if event.key==pygame.K_RIGHT and map.get_tile_properties(robot.get_grid()[0]+1,robot.get_grid()[1],0)['walkable']=='True' :
-                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                screen.blit(bck,robot.get_pos())
-                robot.move("right")
-                resource_group.draw(screen)
-                robot_group.draw(screen)
-                pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                 if matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][2]==0  :
+
+                    if  matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3].decode('UTF-8')=='False' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False' or ( matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False'):
+                        bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("right")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                    elif  (matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3].decode('UTF-8')=='False' and matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True') or matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True' :
+                        bck=pygame.image.load("right.jpg")
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("right")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                 elif matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][2]==1:
+
+                     if matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3].decode('UTF-8')=='False':
+                        bck=pygame.image.load("right.jpg")
+                        screen.blit(bck,((robot.get_grid()[0]+1)*32 , robot.get_grid()[1]*32))
+                        matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][2]=0
+                        matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][3]="True"
+                        matrix[robot.get_grid()[0]+1][robot.get_grid()[1]][4]="right"
+
+
+
 
 
             if event.key==pygame.K_UP and map.get_tile_properties(robot.get_grid()[0],robot.get_grid()[1]-1,0)['walkable']=='True' :
-                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                screen.blit(bck,robot.get_pos())
-                robot.move("up")
-                resource_group.draw(screen)
-                robot_group.draw(screen)
-                pygame.display.update(robot_group.sprites()+resource_group.sprites())
+              if matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][2]==0  :
+
+                    if  matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3].decode('UTF-8')=='False' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False' or ( matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False'):
+                        bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("up")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                    elif  (matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3].decode('UTF-8')=='False' and matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True') or matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True' :
+                        bck=pygame.image.load("up.jpg")
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("up")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+              elif matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][2]==1:
+
+                     if matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3].decode('UTF-8')=='False':
+                        bck=pygame.image.load("up.jpg")
+                        screen.blit(bck,((robot.get_grid()[0])*32 , (robot.get_grid()[1]-1)*32))
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][2]=0
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][3]="True"
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]-1][4]="up"
 
 
             if event.key==pygame.K_DOWN and map.get_tile_properties(robot.get_grid()[0],robot.get_grid()[1]+1,0)['walkable']=='True':
-                bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
-                screen.blit(bck,robot.get_pos())
-                robot.move("bottom")
-                resource_group.draw(screen)
-                robot_group.draw(screen)
-                pygame.display.update(robot_group.sprites()+resource_group.sprites())
+                if matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][2]==0  :
 
+                    if  matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3].decode('UTF-8')=='False' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False' or ( matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='False'):
+                        bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("bottom")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                    elif  (matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3].decode('UTF-8')=='False' and matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True') or matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3].decode('UTF-8')=='True' and  matrix[robot.get_grid()[0]][robot.get_grid()[1]][3].decode('UTF-8')=='True' :
+                        bck=pygame.image.load("down.jpg")
+                        screen.blit(bck,robot.get_pos())
+                        robot.move("bottom")
+                        resource_group.draw(screen)
+                        robot_group.draw(screen)
+                        pygame.display.update(robot_group.sprites()+resource_group.sprites())
+
+                elif matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][2]==1:
+
+                     if matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3].decode('UTF-8')=='False':
+                        bck=pygame.image.load("down.jpg")
+                        screen.blit(bck,((robot.get_grid()[0])*32 , (robot.get_grid()[1]+1)*32))
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][2]=0
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][3]="True"
+                        matrix[robot.get_grid()[0]][robot.get_grid()[1]+1][4]="down"
 
 
 
