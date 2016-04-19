@@ -254,22 +254,12 @@ class Robot(pygame.sprite.Sprite,Inventory):
 
     def mine(self,resource):
         global score
-        global progression
-        global progression_coeficient
         for progress in range(180):
                         time.sleep(0.01)
                         progress_bar=pygame.draw.rect(screen, (255,255,255), pygame.Rect(robot.rect.x-7,robot.rect.y-7,0.25*progress,5))#rect(x,y,lungimea barii,grosimea barii)
                         pygame.display.update(progress_bar)
 
         score+=1
-        if progression>100:
-            robot.advance_level()
-            progression=0
-            if progression_coeficient>0.2:
-                progression_coeficient-=0.2
-        else:
-            progression=progression_coeficient*10+resources[resource][2]*3
-
         self.inventory_of_robot.update_with_item(resources_information[remove_resource_from_coordinates],1)
 
     def advance_level(self):
@@ -397,7 +387,10 @@ def reconstruct_path(came_from,start,goal):
     modified_pos=[0,0]
     for id in path:
        print(matrix[id[0]][id[1]][4])
-       if modified_pos==[0,0]:
+       if modified_pos==[0,0] and matrix[id[0]][id[1]][2]==0:
+             bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
+
+       elif modified_pos==[0,0] and matrix[id[0]][id[1]][2]!=0:
              pygame.init()
              mouse=[pygame.mouse.get_pos()[0]//32,pygame.mouse.get_pos()[1]//32]
              print(mouse)
@@ -424,12 +417,11 @@ def reconstruct_path(came_from,start,goal):
                  matrix[id[0]][id[1]][4]='up'
                  matrix[id[0]][id[1]][3]='True'
                  matrix[id[0]][id[1]][2]=0
-
        else:
-        if matrix[id[0]][id[1]][4].decode("UTF-8")!='None' and matrix[id[0]][id[1]][2]==1:
+        if matrix[id[0]][id[1]][4].decode("UTF-8")!='None' and matrix[id[0]][id[1]][2]==0 :
              bck=pygame.image.load(matrix[id[0]][id[1]][4].decode('UTF-8')+"."+'jpg')
 
-        elif matrix[id[0]][id[1]][3].decode('UTF-8')=='False' and matrix[id[0]][id[1]][2]==0:
+        elif matrix[id[0]][id[1]][3].decode('UTF-8')=='False' and matrix[id[0]][id[1]][2]==0 and matrix[id[0]][id[1]][4].decode("UTF-8")=='None' :
              bck=map.get_tile_image(robot.get_grid()[0],robot.get_grid()[1],0)
         else:
          if id[0]==modified_pos[0]+1 and matrix[id[0]][id[1]][2]==1:
@@ -464,7 +456,7 @@ def reconstruct_path(came_from,start,goal):
        resource_group.draw(screen)
        robot_group.draw(screen)
        pygame.display.update(robot_group.sprites()+resource_group.sprites())
-       time.sleep(0.5)
+       time.sleep(0.3)
        if list(id)!=intial_pos:
             modified_pos=list(id)
 
@@ -507,10 +499,7 @@ def draw_options_for_buttons():
 """------------------MAIN PROGRAM--------------------"""
 #initialize some global variables
 time_until_end=180
-global progression
-progression=0
-global progression_coeficient
-progression_coeficient=2
+
 global code_search,code_sort
 code_search=0
 code_sort=0
@@ -524,8 +513,8 @@ map_height=41
 map_width=41
 global resources
 resources={'gold':['Gold.png',4,100],'diamond':['Diamond.png',5,200],'stone':['Stone.png',2,40],'wood':['Wood.png',1,20],'iron':['Iron.png',3,50]}
-description_resources={'gold':"Highly valuable,get this and you get rich,its value is "+str(resources['gold'][2]),'diamond':'only for bo$$es,its value is '+str(resources['diamond'][2]),'stone':'for the average Joe,its value is '+str(resources['stone'][2]),
-                       'wood':'better have a kitten,its value is '+str(resources['wood'][2]),'iron':" better than the kitten and average Joe,MINE IT,its value is "+str(resources['iron'][2])}
+description_resources={'gold':"Highly valuable,get this and you get rich,its value  is "+str(resources['gold'][2]),'diamond':'the most valuable resource,its value is '+str(resources['diamond'][2]),'stone':'well, better than nothing,its value is '+str(resources['stone'][2]),
+                       'wood':'the cheapest resource,its value is '+str(resources['wood'][2]),'iron':" moderate value,MINE IT,its value is "+str(resources['iron'][2])}
 dict_of_arrows={"up":'up.jpg','left':'left.jpg','right':'right.jpg','down':'down.jpg'}
 dict_of_buffs=[]
 list_of_buttons=[]
@@ -841,7 +830,12 @@ while True:
                         resource_group.remove(pygame.sprite.spritecollideany(robot,resource_group, collided = None))
                         for layer in map.layers:
                             for x,y, image in layer.tiles():
-                                screen.blit(image,(x*map_tilesize,y*map_tilesize))
+                                if matrix[x][y][4].decode("UTF-8")=='None':
+                                 screen.blit(image,(x*map_tilesize,y*map_tilesize))
+                                else:
+                                 bck=pygame.image.load(matrix[x][y][4].decode('UTF-8')+"."+'jpg')
+                                 screen.blit(bck,(x*map_tilesize,y*map_tilesize))
+
                         resource_group.draw(screen)
                         robot_group.draw(screen)
                         pygame.display.update(robot_group.sprites()+resource_group.sprites())
