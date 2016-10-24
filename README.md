@@ -1,2 +1,2 @@
 # ALL-PROJECT Semester 2
-Programming a virtual robot for a game.
+[a link](https://github.com/raizen4/ALL-PROJECT-Semester-2/blob/master/CopyofCopyofFinalMineBusterProjectManagementDocument.pdf)
