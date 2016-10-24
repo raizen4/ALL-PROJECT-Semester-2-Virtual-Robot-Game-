@@ -1,2 +1,2 @@
 # ALL-PROJECT Semester 2
-[a link](https://github.com/raizen4/ALL-PROJECT-Semester-2/blob/master/CopyofCopyofFinalMineBusterProjectManagementDocument.pdf)
+[Documentation about the project can be found if you click me :)](https://github.com/raizen4/ALL-PROJECT-Semester-2/blob/master/CopyofCopyofFinalMineBusterProjectManagementDocument.pdf)
